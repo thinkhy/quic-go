@@ -1212,9 +1212,12 @@ var _ = Describe("Session", func() {
 		Eventually(sess.Context().Done()).Should(BeClosed())
 	})
 
-	It("sends a 1-RTT packet when the handshake completes", func() {
+	It("sends a HANDSHAKE_DONE frame when the handshake completes", func() {
 		done := make(chan struct{})
 		packer.EXPECT().PackPacket().DoAndReturn(func() (*packedPacket, error) {
+			frames, _ := sess.framer.AppendControlFrames(nil, protocol.MaxByteCount)
+			Expect(frames).ToNot(BeEmpty())
+			Expect(frames[0].Frame).To(BeEquivalentTo(&wire.HandshakeDoneFrame{}))
 			defer close(done)
 			return &packedPacket{
 				header: &wire.ExtendedHeader{},
